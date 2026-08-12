@@ -11,4 +11,5 @@ public class Book
     public int Pages { get; set; }
     public int Quantity { get; set; }
     public int InStock { get; set; }
+    public double Rating { get; set; }
 }

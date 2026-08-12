@@ -1,0 +1,12 @@
+namespace Library.Core.Constants;
+
+public static class Roles
+{
+    public const string Admin = "Admin";
+    public const string Librarian = "Librarian";
+    public const string Client = "Client";
+
+    public static readonly string[] All = { Admin, Librarian, Client };
+
+    public static bool IsValid(string role) => All.Contains(role);
+}
