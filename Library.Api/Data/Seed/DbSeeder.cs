@@ -11,14 +11,12 @@ public class DbSeeder
         UserManager<ApplicationUser> userManager
     )
     {
-        // 1. Создаём роли если не существуют
         foreach (var role in Roles.All)
         {
             if (!await roleManager.RoleExistsAsync(role))
                 await roleManager.CreateAsync(new IdentityRole(role));
         }
 
-        // 2. Создаём администратора по умолчанию
         const string adminEmail = "admin@library.local";
 
         if (await userManager.FindByEmailAsync(adminEmail) is null)
@@ -35,6 +33,23 @@ public class DbSeeder
             var result = await userManager.CreateAsync(admin, "Admin123!");
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(admin, Roles.Admin);
+        }
+        const string librarianEmail = "librarian@library.local";
+
+        if (await userManager.FindByEmailAsync(librarianEmail) is null)
+        {
+            var librarian = new ApplicationUser
+            {
+                UserName = librarianEmail,
+                Email = librarianEmail,
+                FirstName = "Главный",
+                LastName = "Библиотекарь",
+                EmailConfirmed = true,
+            };
+
+            var result = await userManager.CreateAsync(librarian, "Lib123!");
+            if (result.Succeeded)
+                await userManager.AddToRoleAsync(librarian, Roles.Librarian);
         }
     }
 }
