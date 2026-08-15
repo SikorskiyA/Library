@@ -69,8 +69,6 @@ public class ReservationService : IReservationService
         if (reservation.Status != ReservationStatus.Active)
             return CancelReservationResult.NotActive;
 
-        reservation.Status = ReservationStatus.Cancelled;
-
         using var transaction = await _context.Database.BeginTransactionAsync();
 
         reservation.Status = ReservationStatus.Cancelled;
@@ -82,7 +80,7 @@ public class ReservationService : IReservationService
         return CancelReservationResult.Success;
     }
 
-    public async Task<List<ReservationResponse>> GetMyReservationsAsync(string id)
+    public async Task<List<ReservationResponse>> GetReservationsByUserId(string id)
     {
         var query = _context.Reservations.Include(r => r.Book).Where(i => i.UserId == id);
         var reservations = await query.OrderBy(d => d.ReservedAt).ToListAsync();

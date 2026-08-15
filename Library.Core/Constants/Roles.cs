@@ -8,5 +8,7 @@ public static class Roles
 
     public static readonly string[] All = { Admin, Librarian, Client };
 
+    public const string LibrarianOrAdmin = $"{Librarian},{Admin}";
+
     public static bool IsValid(string role) => All.Contains(role);
 }

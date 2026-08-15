@@ -1,5 +1,6 @@
 using System.Text;
 using Library.Api.Auth;
+using Library.Api.BackgroundServices;
 using Library.Api.Data;
 using Library.Api.Services;
 using Library.Core.Entities;
@@ -67,6 +68,8 @@ builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailSender, FakeEmailSender>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
+builder.Services.AddScoped<ILoanService, LoanService>();
+builder.Services.AddHostedService<ReservationExpirationService>();
 
 builder
     .Services.AddAuthentication(options =>

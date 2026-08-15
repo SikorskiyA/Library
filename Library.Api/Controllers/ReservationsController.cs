@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Library.Api.Services;
+using Library.Core.Constants;
 using Library.Core.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -25,12 +26,25 @@ public class ReservationsController : ControllerBase
     }
 
     [HttpGet("my")]
+    [Authorize(Roles = Roles.Client)]
     public async Task<IActionResult> GetMy()
     {
         var userId = GetCurrentClientId();
         if (userId is null)
             return BadRequest(new { Message = "Пользователь с таким ID не найден" });
-        var reservations = await _reservationService.GetMyReservationsAsync(userId);
+        var reservations = await _reservationService.GetReservationsByUserId(userId);
+
+        return Ok(reservations);
+    }
+
+    [HttpGet("{id}")]
+    [Authorize(Roles = Roles.Librarian)]
+    public async Task<IActionResult> GetByUserId([FromRoute] string id)
+    {
+        var user = await _userManager.FindByIdAsync(id);
+        if (user is null) return NotFound();
+
+        var reservations = await _reservationService.GetReservationsByUserId(id);
 
         return Ok(reservations);
     }
