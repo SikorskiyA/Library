@@ -32,6 +32,36 @@ public class BookService : IBookService
         };
     }
 
+    public async Task DecreaseStockAsync(Guid bookId)
+    {
+        var book = await _context.Books.FindAsync(bookId);
+
+        if (book is null)
+            throw new InvalidOperationException("Книга не найдена");
+
+        if (book.InStock <= 0)
+            throw new InvalidOperationException("Нет доступных экземпляров книги");
+
+        book.InStock--;
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task IncreaseStockAsync(Guid bookId)
+    {
+        var book = await _context.Books.FindAsync(bookId);
+
+        if (book is null)
+            throw new InvalidOperationException("Книга не найдена");
+
+        if (book.InStock >= book.Quantity)
+            throw new InvalidOperationException(
+                "Количество экземпляров не может превышать общее число"
+            );
+
+        book.InStock++;
+        await _context.SaveChangesAsync();
+    }
+
     public async Task<List<BookResponse>> GetAllBooksAsync()
     {
         var query = _context.Books.Where(q => q.InStock != 0);
@@ -59,9 +89,10 @@ public class BookService : IBookService
         string? publisher
     )
     {
-        var query = author is not null && author.Length != 0
-            ? _context.Books.Where(a => EF.Functions.ILike(a.Author, $"%{author}%"))
-            : _context.Books;
+        var query =
+            author is not null && author.Length != 0
+                ? _context.Books.Where(a => EF.Functions.ILike(a.Author, $"%{author}%"))
+                : _context.Books;
 
         if (genre is not null && genre.Length != 0)
             query = query.Where(g => EF.Functions.ILike(g.Genre, $"%{genre}%"));
@@ -101,27 +132,27 @@ public class BookService : IBookService
         return ToResponse(book);
     }
 
-    public async Task<DeleteBookResult> DeleteBookAsync(Guid id)
+    public async Task<DeleteResult> DeleteBookAsync(Guid id)
     {
         var book = await _context.Books.FindAsync(id);
 
         if (book is null)
-            return DeleteBookResult.NotFound;
+            return DeleteResult.NotFound;
 
         var hasActiveReservations = await _context.Reservations.AnyAsync(r =>
             r.BookId == id && r.Status == ReservationStatus.Active
         );
         if (hasActiveReservations)
-            return DeleteBookResult.HasActiveOperations;
+            return DeleteResult.HasActiveOperations;
 
         var hasActiveLoans = await _context.Loans.AnyAsync(l =>
             l.BookId == id && l.ReturnedAt == null
         );
         if (hasActiveLoans)
-            return DeleteBookResult.HasActiveOperations;
+            return DeleteResult.HasActiveOperations;
         _context.Books.Remove(book);
         await _context.SaveChangesAsync();
 
-        return DeleteBookResult.Success;
+        return DeleteResult.Success;
     }
 }

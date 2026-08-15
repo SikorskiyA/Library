@@ -9,5 +9,7 @@ public interface IBookService
     public Task<BookResponse?> GetBookById(Guid id);
     public Task<List<BookResponse>> SearchBookAsync(string? author, string? genre, string? publisher);
     public Task<BookResponse> CreateBookAsync(CreateBookRequest request);
-    public Task<DeleteBookResult> DeleteBookAsync(Guid id);
+    public Task<DeleteResult> DeleteBookAsync(Guid id);
+    public Task IncreaseStockAsync(Guid id);
+    public Task DecreaseStockAsync(Guid id);
 }

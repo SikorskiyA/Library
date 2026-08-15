@@ -3,6 +3,7 @@ using Library.Api.Auth;
 using Library.Api.Data;
 using Library.Api.Services;
 using Library.Core.Entities;
+using Library.Core.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -63,6 +64,9 @@ var jwtAudience = builder.Configuration["Jwt:Audience"]!;
 
 builder.Services.AddScoped<JwtTokenGenerator>();
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEmailSender, FakeEmailSender>();
+builder.Services.AddScoped<IReservationService, ReservationService>();
 
 builder
     .Services.AddAuthentication(options =>

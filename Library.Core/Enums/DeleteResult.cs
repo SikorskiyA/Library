@@ -1,6 +1,6 @@
 namespace Library.Core.Enums;
 
-public enum DeleteBookResult
+public enum DeleteResult
 {
     Success,
     NotFound,

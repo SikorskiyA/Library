@@ -47,7 +47,7 @@ public class BooksController : ControllerBase
         return Ok(books);
     }
 
-    [HttpPost("create")]
+    [HttpPost]
     [Authorize(Roles = Roles.Librarian)]
     public async Task<IActionResult> Create([FromBody] CreateBookRequest request)
     {
@@ -62,24 +62,14 @@ public class BooksController : ControllerBase
     {
         var result = await _bookService.DeleteBookAsync(id);
 
-        switch (result)
+        return result switch
         {
-            case DeleteBookResult.HasActiveOperations:
-            {
-                return Conflict(
-                    new { Message = "Нельзя удалить книгу с активными бронями или выдачами" }
-                );
-            }
-            case DeleteBookResult.NotFound:
-            {
-                return NotFound();
-            }
-            case DeleteBookResult.Success:
-            {
-                return Ok();
-            }
-            default:
-                return StatusCode(500);
-        }
+            DeleteResult.HasActiveOperations => Conflict(
+                new { Message = "Нельзя удалить книгу с активными бронями или выдачами" }
+            ),
+            DeleteResult.NotFound => NotFound(),
+            DeleteResult.Success => Ok(),
+            _ => StatusCode(500),
+        };
     }
 }
