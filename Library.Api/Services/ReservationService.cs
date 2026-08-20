@@ -1,5 +1,6 @@
 using Library.Api.Data;
 using Library.Api.DTOs;
+using Library.Api.Hubs;
 using Library.Core.Entities;
 using Library.Core.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -38,7 +39,6 @@ public class ReservationService : IReservationService
             throw new Exception("Книги с таким ID не найдено");
         if (book.InStock == 0)
             throw new Exception("Не осталось свободных экземпляров этой книги в наличии");
-
         var reservation = new Reservation
         {
             BookId = bookId,
@@ -85,13 +85,6 @@ public class ReservationService : IReservationService
         var query = _context.Reservations.Include(r => r.Book).Where(i => i.UserId == id);
         var reservations = await query.OrderBy(d => d.ReservedAt).ToListAsync();
 
-        var reservationsResponse = new List<ReservationResponse>();
-
-        foreach (Reservation r in reservations)
-        {
-            reservationsResponse.Add(ToResponse(r));
-        }
-
-        return reservationsResponse;
+        return reservations.Select(ToResponse).ToList();
     }
 }

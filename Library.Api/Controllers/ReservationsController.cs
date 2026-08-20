@@ -1,10 +1,13 @@
 using System.Security.Claims;
+using Library.Api.Hubs;
 using Library.Api.Services;
 using Library.Core.Constants;
 using Library.Core.Entities;
+using Library.Core.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Library.Api.Controllers;
 
@@ -15,14 +18,17 @@ public class ReservationsController : ControllerBase
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IReservationService _reservationService;
+    private readonly IHubContext<BookAvailabilityHub> _hubContext;
 
     public ReservationsController(
         IReservationService reservationService,
-        UserManager<ApplicationUser> userManager
+        UserManager<ApplicationUser> userManager,
+        IHubContext<BookAvailabilityHub> hubContext
     )
     {
         _reservationService = reservationService;
         _userManager = userManager;
+        _hubContext = hubContext;
     }
 
     [HttpGet("my")]
@@ -42,7 +48,8 @@ public class ReservationsController : ControllerBase
     public async Task<IActionResult> GetByUserId([FromRoute] string id)
     {
         var user = await _userManager.FindByIdAsync(id);
-        if (user is null) return NotFound();
+        if (user is null)
+            return NotFound();
 
         var reservations = await _reservationService.GetReservationsByUserId(id);
 
@@ -63,6 +70,15 @@ public class ReservationsController : ControllerBase
         }
         catch (Exception ex)
         {
+            if (ex.Message == "Не осталось свободных экземпляров этой книги в наличии")
+                return Conflict(
+                    new
+                    {
+                        Message = ex.Message,
+                        CanSubscribe = true,
+                        BookId = bookId,
+                    }
+                );
             return BadRequest(new { ex.Message });
         }
     }

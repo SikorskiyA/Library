@@ -2,6 +2,7 @@ using System.Text;
 using Library.Api.Auth;
 using Library.Api.BackgroundServices;
 using Library.Api.Data;
+using Library.Api.Hubs;
 using Library.Api.Services;
 using Library.Core.Entities;
 using Library.Core.Interfaces;
@@ -69,7 +70,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEmailSender, FakeEmailSender>();
 builder.Services.AddScoped<IReservationService, ReservationService>();
 builder.Services.AddScoped<ILoanService, LoanService>();
-builder.Services.AddHostedService<ReservationExpirationService>();
+builder.Services.AddScoped<IReviewService, ReviewService>();
 
 builder
     .Services.AddAuthentication(options =>
@@ -91,7 +92,6 @@ builder
         };
     });
 
-// CORS (временная политика для разработки — сузить, когда будет готов фронтенд)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -106,8 +106,7 @@ builder.Services.AddCors(options =>
 // SignalR
 builder.Services.AddSignalR();
 
-// TODO: когда будет готов класс ReservationExpirationService — раскомментировать
-// builder.Services.AddHostedService<ReservationExpirationService>();
+builder.Services.AddHostedService<ReservationExpirationService>();
 
 var app = builder.Build();
 
@@ -130,8 +129,7 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// TODO: когда будет готов BookAvailabilityHub — раскомментировать
-// app.MapHub<BookAvailabilityHub>("/hubs/book-availability");
+app.MapHub<BookAvailabilityHub>("/hubs/book-availability");
 
 using (var scope = app.Services.CreateScope())
 {

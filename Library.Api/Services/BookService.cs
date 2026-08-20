@@ -1,7 +1,9 @@
 using Library.Api.Data;
 using Library.Api.DTOs;
+using Library.Api.Hubs;
 using Library.Core.Entities;
 using Library.Core.Enums;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace Library.Api.Services;
@@ -9,10 +11,12 @@ namespace Library.Api.Services;
 public class BookService : IBookService
 {
     private readonly ApplicationDbContext _context;
+    private readonly IHubContext<BookAvailabilityHub> _hubContext;
 
-    public BookService(ApplicationDbContext context)
+    public BookService(ApplicationDbContext context, IHubContext<BookAvailabilityHub> hubContext)
     {
         _context = context;
+        _hubContext = hubContext;
     }
 
     public static BookResponse ToResponse(Book book)
@@ -57,9 +61,19 @@ public class BookService : IBookService
             throw new InvalidOperationException(
                 "Количество экземпляров не может превышать общее число"
             );
+        var wasUnavailable = book.InStock == 0;
 
         book.InStock++;
         await _context.SaveChangesAsync();
+
+        if (wasUnavailable)
+        {
+            await _hubContext
+                .Clients.Group(bookId.ToString())
+                .SendAsync("BookAvailable", new { BookId = bookId, BookName = book.Name });
+
+            await _hubContext.Clients.Group(bookId.ToString()).SendAsync("BookAvailableUnsubscribe");
+        }
     }
 
     public async Task<List<BookResponse>> GetAllBooksAsync()
@@ -67,16 +81,10 @@ public class BookService : IBookService
         var query = _context.Books.Where(q => q.InStock != 0);
         var books = await query.OrderBy(r => r.Rating).ToListAsync();
 
-        var booksResponse = new List<BookResponse>();
-        foreach (Book book in books)
-        {
-            booksResponse.Add(ToResponse(book));
-        }
-
-        return booksResponse;
+        return books.Select(ToResponse).ToList();
     }
 
-    public async Task<BookResponse?> GetBookById(Guid id)
+    public async Task<BookResponse?> GetBookByIdAsync(Guid id)
     {
         var book = await _context.Books.FindAsync(id);
 
@@ -154,5 +162,20 @@ public class BookService : IBookService
         await _context.SaveChangesAsync();
 
         return DeleteResult.Success;
+    }
+
+    public async Task<UpdateRatingResult> UpdateRatingAsync(Guid bookId)
+    {
+        var book = await _context.Books.FindAsync(bookId);
+        if (book is null)
+            return UpdateRatingResult.NotFound;
+
+        var reviews = await _context.Reviews.Where(r => r.BookId == bookId).ToListAsync();
+
+        book.Rating = reviews.Count == 0 ? 0 : reviews.Average(r => r.Rating);
+
+        await _context.SaveChangesAsync();
+
+        return UpdateRatingResult.Success;
     }
 }

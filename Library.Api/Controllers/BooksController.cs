@@ -30,7 +30,7 @@ public class BooksController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(Guid id)
     {
-        var book = await _bookService.GetBookById(id);
+        var book = await _bookService.GetBookByIdAsync(id);
 
         return book is not null ? Ok(book) : NotFound();
     }
@@ -48,7 +48,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = Roles.Librarian)]
+    [Authorize(Roles = Roles.LibrarianOrAdmin)]
     public async Task<IActionResult> Create([FromBody] CreateBookRequest request)
     {
         var book = await _bookService.CreateBookAsync(request);
@@ -57,7 +57,7 @@ public class BooksController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = Roles.Librarian)]
+    [Authorize(Roles = Roles.LibrarianOrAdmin)]
     public async Task<IActionResult> Delete(Guid id)
     {
         var result = await _bookService.DeleteBookAsync(id);

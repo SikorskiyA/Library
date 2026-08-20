@@ -11,4 +11,5 @@ public static class Roles
     public const string LibrarianOrAdmin = $"{Librarian},{Admin}";
 
     public static bool IsValid(string role) => All.Contains(role);
+    public static bool IsModerator(string role) => LibrarianOrAdmin.Contains(role);
 }
